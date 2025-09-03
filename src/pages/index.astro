@@ -1,21 +1,234 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import ContextAlert from '../components/ContextAlert.astro';
-import Markdown from '../components/Markdown.astro';
-
-const explainer = `
-An Astro website can go way beyond static pages - on the right platform.
-
-Netlify supports not only [Streaming SSR](https://docs.astro.build/en/guides/server-side-rendering/#html-streaming) and fast [Edge Middleware](https://docs.astro.build/en/guides/middleware/), but also [on-demand revalidation](https://www.netlify.com/blog/cache-tags-and-purge-api-on-netlify/) and [stale-while-revalidate](https://www.netlify.com/blog/swr-and-fine-grained-cache-control/). 
-Any page or data can be rebuilt only when needed, without site visitors ever getting a performance hit.
-`;
+// No frontmatter needed for this static HTML page
 ---
 
-<Layout title="Welcome to Astro.">
-    <ContextAlert class="mb-8" />
-    <h1 class="mb-10">Netlify Platform Starter for Astro</h1>
-    <Markdown content={explainer} class="mb-10 text-lg" />
-    <p>
-        <a href="https://docs.netlify.com/frameworks/astro/" class="btn btn-lg sm:min-w-64">Read the Docs</a>
-    </p>
-</Layout>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contestation Amende Auto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .file-upload input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-upload-btn {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .file-upload:hover .file-upload-btn {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+        
+        .pay-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .pay-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .price {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: #333;
+        }
+    </style>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Contestation Amende Auto</h1>
+        
+        <form id="contest-form" netlify netlify-honeypot="bot-field" method="POST" name="contestation">
+            <input type="hidden" name="form-name" value="contestation" />
+            <p hidden>
+                <label>Don't fill this out: <input name="bot-field" /></label>
+            </p>
+            
+            <div class="form-group">
+                <label for="name">Nom complet *</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="address">Adresse complète *</label>
+                <textarea id="address" name="address" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="immatriculation">Numéro d'immatriculation *</label>
+                <input type="text" id="immatriculation" name="immatriculation" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="documents">Documents (PV, permis, etc.)</label>
+                <div class="file-upload">
+                    <input type="file" id="documents" name="documents" multiple accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="file-upload-btn">
+                        <p>Cliquez ici pour ajouter vos documents</p>
+                        <p><small>PDF, JPG, PNG acceptés</small></p>
+                    </div>
+                </div>
+            </div>
+        </form>
+        
+        <div class="price">20€ TTC</div>
+        
+        <button class="pay-btn" onclick="handlePayment()">Payer et soumettre la contestation</button>
+    </div>
+    
+    <script>
+        // Initialize Stripe (replace with your publishable key)
+        const stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Replace with your actual publishable key
+        
+        async function handlePayment() {
+            const form = document.getElementById('contest-form');
+            const formData = new FormData(form);
+            
+            // Validate form
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            try {
+                // First submit form data to Netlify
+                await fetch('/', {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams(formData).toString()
+                });
+                
+                // Then redirect to Stripe Checkout
+                const { error } = await stripe.redirectToCheckout({
+                    lineItems: [{
+                        price_data: {
+                            currency: 'eur',
+                            product_data: {
+                                name: 'Contestation Amende Auto',
+                                description: 'Service de contestation d\'amende automobile',
+                            },
+                            unit_amount: 2000, // 20€ in cents
+                        },
+                        quantity: 1,
+                    }],
+                    mode: 'payment',
+                    successUrl: window.location.origin + '/success.html',
+                    cancelUrl: window.location.origin + '/cancel.html',
+                    metadata: {
+                        webhook_url: 'https://hooks.zapier.com/hooks/catch/YOUR_ZAPIER_HOOK_ID/', // Replace with actual Zapier webhook URL
+                        form_data: JSON.stringify(Object.fromEntries(formData))
+                    }
+                });
+                
+                if (error) {
+                    console.error('Stripe error:', error);
+                    alert('Erreur lors du paiement: ' + error.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Une erreur est survenue. Veuillez réessayer.');
+            }
+        }
+        
+        // File upload handling
+        document.getElementById('documents').addEventListener('change', function(e) {
+            const fileBtn = document.querySelector('.file-upload-btn p');
+            if (e.target.files.length > 0) {
+                fileBtn.textContent = e.target.files.length + ' fichier(s) sélectionné(s)';
+            } else {
+                fileBtn.textContent = 'Cliquez ici pour ajouter vos documents';
+            }
+        });
+    </script>
+</body>
+</html>
