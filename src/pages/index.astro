@@ -116,12 +116,42 @@
             font-size: 1.5rem;
             color: #333;
         }
+        
+        .photo-preview {
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .files-list {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .file-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .remove-file {
+            color: #dc3545;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
     <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
         <h1>Contestation Amende Auto</h1>
+        <p style="text-align: center; margin-bottom: 30px; color: #666; font-size: 16px;">
+            🤖 Notre IA génère automatiquement vos courriers de contestation et conseils juridiques personnalisés
+        </p>
         
         <form id="contest-form" netlify netlify-honeypot="bot-field" method="POST" name="contestation">
             <input type="hidden" name="form-name" value="contestation" />
@@ -150,14 +180,29 @@
             </div>
             
             <div class="form-group">
-                <label for="documents">Documents (PV, permis, etc.)</label>
+                <label for="contravention-photo">Photo de votre contravention *</label>
                 <div class="file-upload">
-                    <input type="file" id="documents" name="documents" multiple accept=".pdf,.jpg,.jpeg,.png">
+                    <input type="file" id="contravention-photo" name="contravention-photo" required accept=".jpg,.jpeg,.png,.heic" capture="environment">
                     <div class="file-upload-btn">
-                        <p>Cliquez ici pour ajouter vos documents</p>
+                        <p>📷 Prenez ou ajoutez une photo de votre PV</p>
+                        <p><small>JPG, PNG, HEIC acceptés</small></p>
+                    </div>
+                </div>
+                <div id="photo-preview" class="photo-preview" style="display: none;">
+                    <img id="preview-img" alt="Aperçu de votre contravention" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 10px;">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="additional-docs">Documents supplémentaires (permis, carte grise, etc.)</label>
+                <div class="file-upload">
+                    <input type="file" id="additional-docs" name="additional-docs" multiple accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="file-upload-btn">
+                        <p>📄 Ajouter des documents supplémentaires</p>
                         <p><small>PDF, JPG, PNG acceptés</small></p>
                     </div>
                 </div>
+                <div id="additional-files-list" class="files-list"></div>
             </div>
         </form>
         
@@ -202,8 +247,8 @@
                         quantity: 1,
                     }],
                     mode: 'payment',
-                    successUrl: window.location.origin + '/success.html',
-                    cancelUrl: window.location.origin + '/cancel.html',
+                    successUrl: window.location.origin + '/success',
+                    cancelUrl: window.location.origin + '/cancel',
                     metadata: {
                         webhook_url: 'https://hooks.zapier.com/hooks/catch/YOUR_ZAPIER_HOOK_ID/', // Replace with actual Zapier webhook URL
                         form_data: JSON.stringify(Object.fromEntries(formData))
@@ -220,15 +265,69 @@
             }
         }
         
-        // File upload handling
-        document.getElementById('documents').addEventListener('change', function(e) {
-            const fileBtn = document.querySelector('.file-upload-btn p');
-            if (e.target.files.length > 0) {
-                fileBtn.textContent = e.target.files.length + ' fichier(s) sélectionné(s)';
+        // File upload handling for contravention photo
+        document.getElementById('contravention-photo').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileBtn = this.parentElement.querySelector('.file-upload-btn p');
+            const preview = document.getElementById('photo-preview');
+            const previewImg = document.getElementById('preview-img');
+            
+            if (file) {
+                fileBtn.textContent = '✅ Photo de contravention ajoutée';
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
             } else {
-                fileBtn.textContent = 'Cliquez ici pour ajouter vos documents';
+                fileBtn.textContent = '📷 Prenez ou ajoutez une photo de votre PV';
+                preview.style.display = 'none';
             }
         });
+        
+        // File upload handling for additional documents
+        document.getElementById('additional-docs').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const fileBtn = this.parentElement.querySelector('.file-upload-btn p');
+            const filesList = document.getElementById('additional-files-list');
+            
+            if (files.length > 0) {
+                fileBtn.textContent = `📄 ${files.length} document(s) supplémentaire(s) ajouté(s)`;
+                
+                // Show files list
+                filesList.innerHTML = '';
+                Array.from(files).forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <span>${file.name}</span>
+                        <span class="remove-file" onclick="removeAdditionalFile(${index})">×</span>
+                    `;
+                    filesList.appendChild(fileItem);
+                });
+            } else {
+                fileBtn.textContent = '📄 Ajouter des documents supplémentaires';
+                filesList.innerHTML = '';
+            }
+        });
+        
+        function removeAdditionalFile(index) {
+            const input = document.getElementById('additional-docs');
+            const dt = new DataTransfer();
+            const files = input.files;
+            
+            for (let i = 0; i < files.length; i++) {
+                if (i !== index) {
+                    dt.items.add(files[i]);
+                }
+            }
+            
+            input.files = dt.files;
+            input.dispatchEvent(new Event('change'));
+        }
     </script>
 </body>
 </html>
