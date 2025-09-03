@@ -1,0 +1,44 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Functions configuration
+[functions]
+  external_node_modules = ["buffer", "crypto"]
+
+# Form handling
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+# Edge functions
+[[edge_functions]]
+  function = "rewrite"
+  path = "/edge"
+
+# Headers for security and file uploads
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
+# File upload handling
+[[headers]]
+  for = "*.pdf"
+  [headers.values]
+    Content-Disposition = "attachment"
+    Cache-Control = "public, max-age=31536000"

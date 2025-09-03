@@ -144,7 +144,6 @@
             font-weight: bold;
         }
     </style>
-    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <div class="container">
@@ -153,7 +152,7 @@
             🤖 Notre IA génère automatiquement vos courriers de contestation et conseils juridiques personnalisés
         </p>
         
-        <form id="contest-form" netlify netlify-honeypot="bot-field" method="POST" name="contestation">
+        <form id="contest-form" netlify netlify-honeypot="bot-field" method="POST" name="contestation" enctype="multipart/form-data">
             <input type="hidden" name="form-name" value="contestation" />
             <p hidden>
                 <label>Don't fill this out: <input name="bot-field" /></label>
@@ -208,16 +207,59 @@
         
         <div class="price">20€ TTC</div>
         
-        <button class="pay-btn" onclick="handlePayment()">Payer et soumettre la contestation</button>
+        <button class="pay-btn" id="payment-btn">Payer et soumettre la contestation</button>
     </div>
     
-    <script>
-        // Initialize Stripe (replace with your publishable key)
-        const stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Replace with your actual publishable key
+    <script is:inline>
+        // Global variables
+        let stripe = null;
+        let stripeLoaded = false;
+        
+        // Initialize Stripe with better error handling
+        function initializeStripe() {
+            try {
+                if (typeof Stripe !== 'undefined') {
+                    stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Replace with your actual publishable key
+                    stripeLoaded = true;
+                    console.log('Stripe initialized successfully');
+                } else {
+                    console.warn('Stripe is not available - likely blocked by ad blocker');
+                    stripeLoaded = false;
+                }
+            } catch (error) {
+                console.error('Error initializing Stripe:', error);
+                stripeLoaded = false;
+            }
+        }
+        
+        // Load Stripe script dynamically with fallback
+        function loadStripe() {
+            return new Promise((resolve, reject) => {
+                if (typeof Stripe !== 'undefined') {
+                    initializeStripe();
+                    resolve();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.onload = () => {
+                    initializeStripe();
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.warn('Failed to load Stripe script - likely blocked');
+                    stripeLoaded = false;
+                    resolve(); // Don't reject, we'll handle the fallback
+                };
+                document.head.appendChild(script);
+            });
+        }
         
         async function handlePayment() {
             const form = document.getElementById('contest-form');
             const formData = new FormData(form);
+            const submitBtn = document.getElementById('payment-btn');
             
             // Validate form
             if (!form.checkValidity()) {
@@ -225,45 +267,82 @@
                 return;
             }
             
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Traitement en cours...';
+            
             try {
+                // Save form data to localStorage for download later
+                const formDataObj = Object.fromEntries(formData);
+                localStorage.setItem('contestation_form_data', JSON.stringify(formDataObj));
+                
+                // Load Stripe if not already loaded
+                if (!stripeLoaded) {
+                    await loadStripe();
+                }
+                
                 // First submit form data to Netlify
-                await fetch('/', {
+                const netlifyResponse = await fetch('/', {
                     method: 'POST',
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams(formData).toString()
+                    body: formData
                 });
                 
-                // Then redirect to Stripe Checkout
-                const { error } = await stripe.redirectToCheckout({
-                    lineItems: [{
-                        price_data: {
-                            currency: 'eur',
-                            product_data: {
-                                name: 'Contestation Amende Auto',
-                                description: 'Service de contestation d\'amende automobile',
+                if (!netlifyResponse.ok) {
+                    throw new Error('Erreur lors de la soumission du formulaire');
+                }
+                
+                console.log('Form submitted successfully to Netlify');
+                
+                // If Stripe is available, use it for payment
+                if (stripeLoaded && stripe) {
+                    const { error } = await stripe.redirectToCheckout({
+                        lineItems: [{
+                            price_data: {
+                                currency: 'eur',
+                                product_data: {
+                                    name: 'Contestation Amende Auto',
+                                    description: 'Service de contestation d\'amende automobile',
+                                },
+                                unit_amount: 2000, // 20€ in cents
                             },
-                            unit_amount: 2000, // 20€ in cents
-                        },
-                        quantity: 1,
-                    }],
-                    mode: 'payment',
-                    successUrl: window.location.origin + '/success',
-                    cancelUrl: window.location.origin + '/cancel',
-                    metadata: {
-                        webhook_url: 'https://hooks.zapier.com/hooks/catch/YOUR_ZAPIER_HOOK_ID/', // Replace with actual Zapier webhook URL
-                        form_data: JSON.stringify(Object.fromEntries(formData))
+                            quantity: 1,
+                        }],
+                        mode: 'payment',
+                        successUrl: window.location.origin + '/success?payment=stripe',
+                        cancelUrl: window.location.origin + '/cancel',
+                        metadata: {
+                            form_data: JSON.stringify(formDataObj)
+                        }
+                    });
+                    
+                    if (error) {
+                        throw new Error('Erreur Stripe: ' + error.message);
                     }
-                });
-                
-                if (error) {
-                    console.error('Stripe error:', error);
-                    alert('Erreur lors du paiement: ' + error.message);
+                } else {
+                    // Fallback: redirect to success page with payment instructions
+                    alert('Votre demande a été soumise! Vous recevrez un email avec les instructions de paiement dans quelques minutes.');
+                    window.location.href = '/success?payment=manual';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Une erreur est survenue. Veuillez réessayer.');
+                alert('Une erreur est survenue: ' + error.message);
+                
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Payer et soumettre la contestation';
             }
         }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStripe();
+            
+            // Add event listener to payment button
+            const paymentBtn = document.getElementById('payment-btn');
+            if (paymentBtn) {
+                paymentBtn.addEventListener('click', handlePayment);
+            }
+        });
         
         // File upload handling for contravention photo
         document.getElementById('contravention-photo').addEventListener('change', function(e) {
