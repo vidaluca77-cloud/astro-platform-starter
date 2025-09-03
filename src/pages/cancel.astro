@@ -1,0 +1,115 @@
+---
+// Cancel page when payment is cancelled
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement Annulé - Contestation Amende Auto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .cancel-icon {
+            font-size: 4rem;
+            color: #ffc107;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .retry-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .home-btn {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="cancel-icon">⚠️</div>
+        <h1>Paiement Annulé</h1>
+        
+        <p>Votre paiement a été annulé. Aucun montant n'a été débité de votre compte.</p>
+        
+        <div class="info-box">
+            <p>
+                <strong>Pas d'inquiétude !</strong><br>
+                Vos informations ont été sauvegardées. Vous pouvez reprendre le processus de paiement à tout moment.
+            </p>
+        </div>
+        
+        <p>
+            Pour bénéficier de notre service de contestation d'amende avec intelligence artificielle, 
+            veuillez compléter le paiement de 20€.
+        </p>
+        
+        <a href="/" class="btn retry-btn">Réessayer le paiement</a>
+        <a href="/" class="btn home-btn">Retour à l'accueil</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+---
+// Success page after payment
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement Réussi - Contestation Amende Auto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .home-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .home-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Paiement Réussi !</h1>
+        
+        <p>Merci ! Votre paiement de 20€ a été traité avec succès.</p>
+        
+        <div class="info-box">
+            <h3>Étapes suivantes :</h3>
+            <p>
+                Notre intelligence artificielle va analyser votre dossier et générer automatiquement :
+            </p>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>Un courrier de contestation personnalisé</li>
+                <li>Des conseils juridiques adaptés à votre situation</li>
+                <li>Un PDF prêt à envoyer aux autorités</li>
+            </ul>
+        </div>
+        
+        <p>
+            <strong>Vous recevrez vos documents par email dans les 24 heures.</strong>
+        </p>
+        
+        <p>
+            En cas de question, n'hésitez pas à nous contacter.
+        </p>
+        
+        <a href="/" class="home-btn">Retour à l'accueil</a>
+    </div>
+</body>
+</html>
