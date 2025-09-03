@@ -100,6 +100,12 @@
             </ul>
         </div>
         
+        <div id="download-section" style="display: none;">
+            <button id="download-btn" class="home-btn" style="background: #28a745; margin-right: 10px;">
+                📥 Télécharger vos documents
+            </button>
+        </div>
+        
         <p>
             <strong>Vous recevrez vos documents par email dans les 24 heures.</strong>
         </p>
@@ -110,5 +116,61 @@
         
         <a href="/" class="home-btn">Retour à l'accueil</a>
     </div>
+    
+    <script>
+        // Check if there's form data in localStorage to enable download
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            
+            if (sessionId || localStorage.getItem('contestation_form_data')) {
+                document.getElementById('download-section').style.display = 'block';
+                
+                document.getElementById('download-btn').addEventListener('click', async function() {
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.textContent = 'Génération en cours...';
+                    
+                    try {
+                        const formData = JSON.parse(localStorage.getItem('contestation_form_data') || '{}');
+                        
+                        const response = await fetch('/api/download', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                formData,
+                                sessionId: sessionId || Date.now().toString()
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Create download link
+                            const blob = new Blob([atob(result.document)], { type: result.contentType });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = result.filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            btn.textContent = '✅ Document téléchargé';
+                            btn.style.background = '#28a745';
+                        } else {
+                            throw new Error(result.error || 'Erreur de téléchargement');
+                        }
+                    } catch (error) {
+                        console.error('Download error:', error);
+                        alert('Erreur lors du téléchargement: ' + error.message);
+                        btn.disabled = false;
+                        btn.textContent = '📥 Télécharger vos documents';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
